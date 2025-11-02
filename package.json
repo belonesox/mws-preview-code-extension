@@ -1,0 +1,157 @@
+{
+  "name": "mws-preview",
+  "displayName": "MWS Preview (MediaWiki via API)",
+  "description": "Efficient MediaWiki preview using MediaWiki API, heuristics to fix wikitext, publish using MWS",
+  "version": "0.5.6",
+  "publisher": "belonesox",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/belonesox/mws-preview-code-extension"
+  },
+  "engines": {
+    "vscode": "^1.96.2"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:mws.openPreview",
+    "onCommand:mws.setAuthString",
+    "onCommand:mws.setSyncSummary",
+    "onCommand:mws.syncCurrent",
+    "onCommand:mws.fixWikiText",
+    "onLanguage:wikitext"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mws.openPreview",
+        "title": "MWS: Open Preview",
+        "icon": {
+          "light": "./media/icon-preview.svg",
+          "dark": "./media/icon-preview.svg"
+        }
+      },
+      {
+        "command": "mws.syncCurrent",
+        "title": "MWS: Sync/Publish Current…",
+        "icon": {
+          "light": "./media/icon-sync.svg",
+          "dark": "./media/icon-sync.svg"
+        }
+      },
+      {
+        "command": "mws.fixWikiText",
+        "title": "MWS: Fix WikiText",
+        "icon": {
+          "light": "./media/icon-fix.svg",
+          "dark": "./media/icon-fix.svg"
+        }
+      },
+      {
+        "command": "mws.setAuthString",
+        "title": "MWS: Set Auth String…"
+      },
+      {
+        "command": "mws.setSyncSummary",
+        "title": "MWS: Set Sync Summary…"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "mws.openPreview",
+          "group": "navigation@998",
+          "when": "editorLangId == wikitext"
+        },
+        {
+          "command": "mws.syncCurrent",
+          "group": "navigation@999",
+          "when": "editorLangId == wikitext"
+        },
+        {
+          "command": "mws.fixWikiText",
+          "group": "navigation@997",
+          "when": "editorLangId == wikitext"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "MWS Preview",
+      "properties": {
+        "mws.apiUrl": {
+          "type": "string",
+          "default": "https://ru.wikipedia.org/w/api.php",
+          "description": "Глобальный API endpoint для MediaWiki (используется, если не найден .mws/config.json)."
+        },
+        "mws.debounceMs": {
+          "type": "number",
+          "default": 10000,
+          "description": "Дебаунс (мс) для автообновления предпросмотра."
+        },
+        "mws.background": {
+          "type": "string",
+          "default": "#ffffff",
+          "description": "Цвет фона предпросмотра."
+        },
+        "mws.hideEditLinks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Скрывать ссылки [править] в заголовках."
+        },
+        "mws.insecureTLS": {
+          "type": "boolean",
+          "default": false,
+          "description": "Разрешить небезопасные TLS-соединения (например, для самоподписанных сертификатов)."
+        },
+        "mws.fixTypography": {
+          "type": "boolean",
+          "default": true,
+          "description": "Исправлять типографику по правилам Викификатора при запуске «Fix WikiText»."
+        },
+        "mws.sync.command": {
+          "type": "string",
+          "default": "mws push \"${file}\"",
+          "description": "Команда публикации/синка (переменные как в VS Code: ${file}, ${workspaceFolder}, …)"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "mws.openPreview",
+        "key": "ctrl+k v",
+        "mac": "cmd+k v",
+        "when": "editorLangId == wikitext"
+      },
+      {
+        "command": "mws.syncCurrent",
+        "key": "ctrl+alt+s",
+        "mac": "cmd+alt+s",
+        "when": "editorLangId == wikitext"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "pretest": "npm run compile",
+    "test": "node ./dist/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.22",
+    "@types/vscode": "^1.96.0",
+    "typescript": "^5.9.3",
+    "@vscode/test-electron": "^2.4.1",
+    "@types/mocha": "^10.0.7",
+    "mocha": "^10.7.0",
+    "@types/glob": "^8.1.0",
+    "glob": "^11.0.0"
+  },
+  "dependencies": {
+    "undici": "^6.19.2"
+  },
+  "license": "MIT"
+}
