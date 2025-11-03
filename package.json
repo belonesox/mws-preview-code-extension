@@ -2,7 +2,7 @@
   "name": "mws-preview",
   "displayName": "MWS Preview (MediaWiki via API)",
   "description": "Efficient MediaWiki preview using MediaWiki API, heuristics to fix wikitext, publish using MWS",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "publisher": "belonesox",
   "repository": {
     "type": "git",
@@ -112,7 +112,7 @@
         },
         "mws.sync.command": {
           "type": "string",
-          "default": "mws push \"${file}\"",
+          "default": "mws push \"${file}\" --summary \"${summary}\"",
           "description": "Команда публикации/синка (переменные как в VS Code: ${file}, ${workspaceFolder}, …)"
         }
       }

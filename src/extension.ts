@@ -432,7 +432,8 @@ async function setSyncSummary() {
 
 function interpolateCommand(
   tpl: string,
-  doc: vscode.TextDocument
+  doc: vscode.TextDocument,
+  summary: string | null
 ): { cmd: string; cwd: string } {
   const file = doc.fileName;
   const dirname = path.dirname(file);
@@ -449,6 +450,7 @@ function interpolateCommand(
     "${fileExtname}": ext,
     "${fileBasenameNoExtension}": basenameNoExt,
     "${workspaceFolder}": ws,
+    "${summary}": shellQuote(summary || ""),
   };
   let cmd = tpl;
   for (const [k, v] of Object.entries(map)) cmd = cmd.split(k).join(v);
@@ -792,11 +794,14 @@ async function syncCurrent(context: vscode.ExtensionContext) {
   }
 
   const cfg = vscode.workspace.getConfiguration("mws");
-  let tpl = cfg.get<string>("sync.command") || 'mws push "${file}"';
-  if (sessionSyncSummary) {
-    tpl += ` --summary ${shellQuote(sessionSyncSummary)}`;
-  }
-  const { cmd, cwd } = interpolateCommand(tpl, editor.document);
+  const tpl =
+    cfg.get<string>("sync.command") ||
+    'mws push "${file}" --summary ${summary}';
+  const { cmd, cwd } = interpolateCommand(
+    tpl,
+    editor.document,
+    sessionSyncSummary
+  );
 
   const authChanged =
     !syncTerminal ||

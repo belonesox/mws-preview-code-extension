@@ -229,12 +229,9 @@ export function wikify(text: string): string {
   r(/(\s\d+)\.(\d+[\u00A0 ]*[%‰°×])/gi, "$1,$2");
 
   //"" → «»
-  for (let i = 1; i <= 2; i++) {
-    r(
-      /([\s\x02!|#'"\/(;+-])"([^"]*)([^\s"(|])"([^a-zа-яё])/gi,
-      "$1«$2$3»$4"
-    );
-  }
+  // A more robust regex to handle quotes.
+  // It looks for an opening quote preceded by a non-word character (or start of line).
+  r(/(^|\W)"([^"]+)"/g, "$1«$2»");
   while (/«[^»]*«/.test(txt)) {
     r(/«([^»]*)«([^»]*)»/g, "«$1„$2“");
   }

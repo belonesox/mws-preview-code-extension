@@ -1,2 +1,2 @@
 
- .uri(URI.create(String.format("http://host.docker.internal:5000/get_marked_copy/?user=%s&domain=%s&filename=%s", name, domain, filename)))
+ .uri(URI.create(String.format("http://host.docker.internal:5000/get_uncrypted_copy/?user=%s&domain=%s&filename=%s", name, domain, filename)))
