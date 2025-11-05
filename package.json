@@ -1,15 +1,15 @@
 {
   "name": "mws-preview",
   "displayName": "MWS Preview (MediaWiki via API)",
-  "description": "Efficient MediaWiki preview using MediaWiki API, heuristics to fix wikitext, publish using MWS",
-  "version": "0.5.7",
+  "description": "Efficient MediaWiki preview using MediaWiki API, heuristics to paste/fix wikitext, publish using MWS",
+  "version": "0.5.11",
   "publisher": "belonesox",
   "repository": {
     "type": "git",
     "url": "https://github.com/belonesox/mws-preview-code-extension"
   },
   "engines": {
-    "vscode": "^1.96.2"
+    "vscode": "^1.105.0"
   },
   "categories": [
     "Other"
@@ -77,6 +77,11 @@
         }
       ]
     },
+    "documentPaste": [
+      {
+        "language": "wikitext"
+      }
+    ],
     "configuration": {
       "title": "MWS Preview",
       "properties": {
@@ -114,6 +119,11 @@
           "type": "string",
           "default": "mws push \"${file}\" --summary \"${summary}\"",
           "description": "Команда публикации/синка (переменные как в VS Code: ${file}, ${workspaceFolder}, …)"
+        },
+        "mws.debugMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Включить режим отладки для вывода дополнительной информации в Output Channel."
         }
       }
     },
@@ -142,7 +152,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.22",
-    "@types/vscode": "^1.96.0",
+    "@types/vscode": "^1.105.0",
     "typescript": "^5.9.3",
     "@vscode/test-electron": "^2.4.1",
     "@types/mocha": "^10.0.7",

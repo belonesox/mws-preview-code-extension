@@ -4,6 +4,7 @@ import * as fs from "fs";
 import { Agent, fetch } from "undici";
 import { domainToUnicode } from "url";
 import { wikify } from "./wikificator";
+import { html2mw } from "./html2mw";
 
 // ---------------- Preview state ----------------
 let panel: vscode.WebviewPanel | undefined;
@@ -12,13 +13,26 @@ let isRendering = false;
 let pendingRender = false;
 let syncTerminal: vscode.Terminal | undefined;
 let syncTerminalAuth: Auth | null = null;
+let debugChannel: vscode.OutputChannel | undefined;
 
 // ---------------- Auth (ephemeral) ----------------
 type Auth = { username: string; password: string; domain: string };
 let sessionAuth: Auth | null = null;
 let sessionSyncSummary: string | null = null;
 
+function logDebug(message: string) {
+  if (debugChannel) {
+    debugChannel.appendLine(message);
+  }
+}
+
 export function activate(context: vscode.ExtensionContext) {
+  const cfg = vscode.workspace.getConfiguration("mws");
+  if (cfg.get<boolean>("debugMode")) {
+    debugChannel = vscode.window.createOutputChannel("MWS Preview");
+    logDebug("MWS Preview debug mode is enabled.");
+  }
+
   context.subscriptions.push(
     vscode.commands.registerCommand("mws.openPreview", () =>
       openPreview(context)
@@ -37,6 +51,36 @@ export function activate(context: vscode.ExtensionContext) {
         syncTerminalAuth = null;
       }
     })
+  );
+
+  // Гарантированно получаем kind (в современных VS Code есть .Empty)
+  const pasteKind = vscode.DocumentDropOrPasteEditKind.Empty.append('wikitext', 'html');
+
+  const pasteProvider: vscode.DocumentPasteEditProvider = {
+    async provideDocumentPasteEdits(doc, ranges, dataTransfer) {
+      const htmlItem = dataTransfer.get('text/html');
+      if (!htmlItem) return;
+
+      const html = await htmlItem.asString();  
+      if (!html) return;
+
+      logDebug("Clipboard has HTML:" + html);
+
+      const wikitext = html2mw(html);          
+
+      const paste = new vscode.DocumentPasteEdit(wikitext, 'Paste HTML as Wikitext', pasteKind);
+      return [paste];
+    }
+  };
+
+  // Метаданные: всегда массив, без undefined
+  const meta: vscode.DocumentPasteProviderMetadata = {
+    pasteMimeTypes: ['text/html'],
+    providedPasteEditKinds: [pasteKind],
+  };
+
+  context.subscriptions.push(
+    vscode.languages.registerDocumentPasteEditProvider({ language: 'wikitext' }, pasteProvider, meta)
   );
 }
 
@@ -381,6 +425,7 @@ function wrapHTML(
 </html>`;
 }
 
+
 function escapeHtml(s: string) {
   return s.replace(
     /[&<>"']/g,
@@ -519,29 +564,6 @@ function decodeMwFragment(encodedFragment: string): string {
     }
 }
 
-// function decodeMwFragment(fragment: string): string {
-//   // In MW fragments, underscores are used for spaces.
-//   // We'll convert them to %20 to be handled by decodeURIComponent.
-//   let s = fragment.replace(/_/g, "%20");
-
-//   // Protect dots inside numbers (e.g. in "2.6.16").
-//   const protectedPlaceholder = "__DOT_PROTECTED__";
-//   s = s.replace(/(?<=\d)\.(?=\d)/g, protectedPlaceholder);
-
-//   // Convert dot-encoded chars to percent-encoded.
-//   s = s.replace(/\.([0-9a-fA-F]{2})/g, "%$1");
-
-//   // Unprotect dots.
-//   s = s.replace(new RegExp(protectedPlaceholder, "g"), ".");
-
-//   try {
-//     return decodeURIComponent(s);
-//   } catch (e) {
-//     // If decoding fails, it might be because some parts were not encoded correctly.
-//     // The original string is a safer fallback than a partially decoded one.
-//     return fragment;
-//   }
-// }
 
 export function fixWikiTextLogic(
   text: string,
@@ -573,6 +595,22 @@ export function fixWikiTextLogic(
       } catch (e) {
         return match;
       }
+    }
+  );
+
+  // Rule: Convert <a href...> to wikitext links
+  newContent = newContent.replace(
+    /<a\s+href=(?:"([^"]*)"|'([^']*)'|([^\s>]+))[^>]*>((.|\n)*?)<\/a>/gi,
+    (match, href1, href2, href3, content) => {
+      const href = href1 || href2 || href3;
+      if (href) {
+        const cleanContent = content.replace(/<[^>]+>/g, "").trim();
+        if (cleanContent && cleanContent !== href) {
+          return `[${href} ${cleanContent}]`;
+        }
+        return `[${href}]`;
+      }
+      return content;
     }
   );
 

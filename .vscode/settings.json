@@ -1,0 +1,11 @@
+{
+  "files.eol": "\n",
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "mws.apiUrl": "https://ru.wikipedia.org/w/api.php",
+  "mws.debounceMs": 10000,
+  "mws.background": "#ffffff",
+  "mws.hideEditLinks": true,
+  "mws.sync.command": "mws push \"${file}\""
+}

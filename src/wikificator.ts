@@ -136,9 +136,9 @@ export function wikify(text: string): string {
   // Hyphens and en dashes to pretty dashes
   r(/–/g, "-"); //&ndash; ->  hyphen
   r(/&(#151|[nm]dash);/g, "—"); // -> &mdash;
-  // r(/(&nbsp;|\s)-{1,3} /g, "$1— "); // hyphen -> &mdash;
-  r(/(\d)--(\d)/g, "$1—$2"); // -> &mdash;
   r(/(\s)-(\d)/g, "$1−$2"); //hyphen -> minus
+  r(/(\d)--(\d)/g, "$1—$2"); // -> &mdash;
+  r(/\s+-{1,3}\s+/g, " — "); // hyphen -> &mdash;
 
   // Entities etc. → Unicode chars
   r(/&#x([0-9a-f]{1,4});/gi, (n, a) => String.fromCharCode(parseInt(a, 16)));

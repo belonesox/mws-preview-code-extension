@@ -1,0 +1,14 @@
+Table with class attributes:
+
+<table border="1">
+  <tr>
+    <th>
+Header
+    </th>
+  </tr>
+  <tr>
+    <td>
+Data
+    </td>
+  </tr>
+</table>

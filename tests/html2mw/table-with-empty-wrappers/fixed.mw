@@ -1,0 +1,22 @@
+Table with empty wrappers:
+
+<table border="1">
+  <tr>
+    <td>
+Cell 1
+    </td>
+    <td>
+<div style="padding:5px">
+Styled div
+</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+Nested empty wrappers
+    </td>
+    <td>
+Plain cell
+    </td>
+  </tr>
+</table>
