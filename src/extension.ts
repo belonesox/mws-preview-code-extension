@@ -437,25 +437,29 @@ function escapeHtml(s: string) {
 }
 
 // ---------------- Auth & Sync ----------------
+// ---------------- Auth & Sync ----------------
 async function setAuthString() {
   const input = await vscode.window.showInputBox({
-    prompt: "Строка авторизации для MediaWiki (user[@domain]:password)",
-    password: true,
-    ignoreFocusOut: true,
-    placeHolder: "user[@domain]:password",
+    prompt: "Строка авторизации (через пробел): username password [domain]",
+    ignoreFocusOut: true, // Театр безопасности с password: true убран
+    placeHolder: "bot@suffix my_secret_password optional_domain",
   });
+  
   if (!input) return;
-  const m = input.match(/^([^:@]+)(?:@([^:]+))?:(.+)$/);
-  if (!m) {
+  
+  const parts = input.trim().split(/\s+/);
+  if (parts.length < 2 || parts.length > 3) {
     vscode.window.showErrorMessage(
-      "Неверный формат. Ожидается user[@domain]:password"
+      "Неверный формат. Ожидается 2 или 3 слова: username password [domain]"
     );
     return;
   }
-  const [, user, domain = "", password] = m;
+  
+  const [user, password, domain = ""] = parts;
+  
   sessionAuth = { username: user, domain, password };
   vscode.window.showInformationMessage(
-    `Авторизация сохранена в сессии: ${user}${domain ? "@" + domain : ""}`
+    `Авторизация сохранена в сессии: ${user}${domain ? " (домен: " + domain + ")" : ""}`
   );
 }
 
