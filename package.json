@@ -2,7 +2,7 @@
   "name": "mws-preview",
   "displayName": "MWS Preview (MediaWiki via API)",
   "description": "Efficient MediaWiki preview using MediaWiki API, heuristics to paste/fix wikitext, publish using MWS",
-  "version": "0.5.11",
+  "version": "0.5.12",
   "publisher": "belonesox",
   "repository": {
     "type": "git",
