@@ -1,4 +1,4 @@
 #!/bin/sh
 rm -f *.vsix
 vsce package
-code --install-extension *.vsix
+code --force  --install-extension *.vsix

@@ -89,42 +89,47 @@
         "mws.apiUrl": {
           "type": "string",
           "default": "https://ru.wikipedia.org/w/api.php",
-          "description": "Глобальный API endpoint для MediaWiki (используется, если не найден .mws/config.json)."
+          "description": "Global API endpoint for MediaWiki (used if .mws/config.json is not found)."
         },
         "mws.debounceMs": {
           "type": "number",
           "default": 10000,
-          "description": "Дебаунс (мс) для автообновления предпросмотра."
+          "description": "Debounce time (ms) for preview auto-update."
         },
         "mws.background": {
           "type": "string",
           "default": "#ffffff",
-          "description": "Цвет фона предпросмотра."
+          "description": "Preview background color."
         },
+        "mws.skin": {
+          "type": "string",
+          "default": "vector",
+          "description": "MediaWiki skin name (e.g., vector, monobook, timeless) for exact style matching."
+        },        
         "mws.hideEditLinks": {
           "type": "boolean",
           "default": true,
-          "description": "Скрывать ссылки [править] в заголовках."
+          "description": "Hide [edit] links in headings."
         },
         "mws.insecureTLS": {
           "type": "boolean",
           "default": false,
-          "description": "Разрешить небезопасные TLS-соединения (например, для самоподписанных сертификатов)."
+          "description": "Allow insecure TLS connections (e.g., for self-signed certificates)."
         },
         "mws.fixTypography": {
           "type": "boolean",
           "default": true,
-          "description": "Исправлять типографику по правилам Викификатора при запуске «Fix WikiText»."
+          "description": "Fix typography according to Wikificator rules when running 'Fix WikiText'."
         },
         "mws.sync.command": {
           "type": "string",
           "default": "mws push \"${file}\" --summary \"${summary}\"",
-          "description": "Команда публикации/синка (переменные как в VS Code: ${file}, ${workspaceFolder}, …)"
+          "description": "Publish/sync command (VS Code variables supported: ${file}, ${workspaceFolder}, etc.)"
         },
         "mws.debugMode": {
           "type": "boolean",
           "default": false,
-          "description": "Включить режим отладки для вывода дополнительной информации в Output Channel."
+          "description": "Enable debug mode to output additional information to the Output Channel."
         }
       }
     },

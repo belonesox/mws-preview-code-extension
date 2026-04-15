@@ -92,6 +92,7 @@ type MwsConfig = {
   user_agent?: string | null;
   repo_root?: string | null;
   skin_css?: string[] | null;
+  skin?: string;
 };
 
 // ---------------- Preview ----------------
@@ -130,8 +131,7 @@ async function openPreview(context: vscode.ExtensionContext) {
     try {
       const doc = editor.document;
       const text = doc.getText();
-      const { apiUrl, ua, origin, baseDir, localStyle, externalCss } =
-        await resolveEnv(doc.uri);
+      const { apiUrl, ua, origin, baseDir, localStyle, externalCss, skin } = await resolveEnv(doc.uri);
       if (!apiUrl) {
         panel!.webview.html = wrapHTML(
           `<p style="color:#c00">Не задан api_url (ни в .mws/config.json, ни в глобальной настройке mws.apiUrl).</p>`,
@@ -148,11 +148,22 @@ async function openPreview(context: vscode.ExtensionContext) {
         insecureTLS
       );
       const htmlFixed = rewriteResourceUrls(htmlRaw, origin, baseDir);
-      const mwStyles = modules.length
+      // Базовые модули, которые нужны для любого MW-контента
+      const baseModules = [
+        "site.styles",                 // Подтянет кастомный MediaWiki:Common.css твоей вики
+        "mediawiki.skinning.content",  // Базовые стили контента (как раз dt/dd, отступы, картинки)
+        "mediawiki.skinning.interface", // Базовые интерфейсные штуки
+        `skins.${skin}.styles`
+      ];
+
+      // Сливаем базовые модули с теми, что отдал action=parse (Set уберет дубликаты)
+      const allModules = Array.from(new Set([...baseModules, ...modules]));
+
+      const mwStyles = allModules.length
         ? [
             `${origin}${baseDir}load.php?modules=${encodeURIComponent(
-              modules.join("|")
-            )}&only=styles`,
+              allModules.join("|")
+            )}&only=styles&skin=${encodeURIComponent(skin)}`,
           ]
         : [];
 
@@ -208,25 +219,30 @@ async function resolveEnv(uri: vscode.Uri): Promise<{
   baseDir: string;
   localStyle: string;
   externalCss: string[];
+  skin: string; // <-- Добавили в возвращаемое значение
 }> {
   const localConfig = await findLocalConfig(uri);
   let apiUrl: string | null = null;
   let ua = "mws-prototype/0.0.3";
   let externalCss: string[] = [];
+  let skin = "vector"; // <-- По умолчанию
+
+  const cfg = vscode.workspace.getConfiguration("mws");
+
   if (localConfig?.api_url) {
     apiUrl = normalizeApi(localConfig.api_url);
     ua = localConfig.user_agent || ua;
-    externalCss = Array.isArray(localConfig.skin_css)
-      ? localConfig.skin_css
-      : [];
+    externalCss = Array.isArray(localConfig.skin_css) ? localConfig.skin_css : [];
+    skin = localConfig.skin || cfg.get<string>("skin") || "vector";
   } else {
-    const cfg = vscode.workspace.getConfiguration("mws");
     apiUrl = cfg.get<string>("apiUrl") || null;
     apiUrl = apiUrl ? normalizeApi(apiUrl) : null;
+    skin = cfg.get<string>("skin") || "vector";
   }
+  
   const { origin, baseDir } = computeOrigins(apiUrl || "");
   const localStyle = await findLocalStyle(uri);
-  return { apiUrl, ua, origin, baseDir, localStyle, externalCss };
+  return { apiUrl, ua, origin, baseDir, localStyle, externalCss, skin };
 }
 
 function normalizeApi(url: string): string {
@@ -404,8 +420,8 @@ function wrapHTML(
   ${baseTag}
   ${externalLinks}
   ${mwStyleLinks}
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline' https:; font-src https: data:;">
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'none'; img-src * data:; style-src 'unsafe-inline' *; font-src * data:;">    
   <style>
     html, body { padding: 0; margin: 0; background: ${bg}; }
     body { padding: 12px; line-height: 1.6; font-family: -apple-system, Segoe UI, Roboto, sans-serif; color: #111; }
