@@ -1,129 +1,127 @@
-# MWS Preview 
+# MWS Preview
 
-Решаемая проблема:
-- [MediaWiki](https://mediawiki.org) очень популярный и удобный движок для систем управления знаниями 📚
-    - как глобальных 🌍
-    - так и локальных, внутрикомпанейских 🏢
-        - даже небольшому проекту часто удобно завести MediaWiki:
-            - проект может внезапно вырасти 📈
-            - единообразный интерфейс работы с большими базами знаний в MediaWiki
-        - проще поддерживать целостность ссылок 🔗
-        - заказчикам-читателям важнее читать, чем писать. 👀
-        - удобно поддерживать «порталы» 🧭
-- Интерфейс редактирования в броузере прост, но сильно ограничен возможностями textarea, или визуального редактора ✍️
-    - из-за ограничений textarea язык разметки не так хорош, как бы мог ⚠️
-      - например, нельзя использовать клавишу `TAB`, и бодро рулить отступами, как в MD ⌨️
-- Но профессионалам хочется эффективно работать с содержимым  
-    - как с файлами с плоской разметкой 📄
-    - используя хороший редактор 💻
-        - например VSCode 
-    - для скорости ⚡
-    - для объемных статей
-    - для массовых операций — редактирований и т.п. 🧹
-    - для совместного *realtime* редактирования  🤝
-        - используя `code-server` 
+The Problem:
+- [MediaWiki](https://mediawiki.org) is a very popular and convenient engine for knowledge management systems 📚
+    - both global 🌍
+    - and local, intra-company ones 🏢
+        - even for a small project, it is often convenient to set up MediaWiki:
+            - the project can grow unexpectedly 📈
+            - uniform interface for working with large knowledge bases in MediaWiki
+        - easier to maintain link integrity 🔗
+        - for customer-readers, reading is more important than writing. 👀
+        - convenient to maintain «portals» 🧭
+- The browser editing interface is simple, but heavily limited by the capabilities of a textarea or visual editor ✍️
+    - due to textarea limitations, the markup language is not as good as it could be ⚠️
+      - for example, you cannot use the `TAB` key to briskly manage indents, like in MD ⌨️
+    - even with best Web Editors like CodeMirror/WikEd you have no professional IDE experience
+- But professionals want to work with content effectively
+    - like with flat markup files 📄
+    - using a good editor 💻
+        - such as VSCode
+    - for speed ⚡
+    - for voluminous articles
+    - for mass operations — bulk editing, etc. 🧹
+    - for collaborative *realtime* editing  🤝
+        - using `code-server`
 
 ---
 
-Для этого предназначено это расширение, которое позволяет
-- ![](./docs/pics/icon-preview.png) просматривать даже не сохраненный `.mw` файл в окне предпросмотра, без публикации 
-  - с учетом всех шаблонов и расширений и прочих настроек вашей MediaWiki
-- ![](./docs/pics/icon-fix.png) чинить проблемы разметки и типографики одной кнопкой «сделать хорошо»
+This is what this extension is designed for, allowing you to:
+- ![](./docs/pics/icon-preview.png) preview even an unsaved `.mw` file in a preview pane, without publishing
+  - taking into account all templates, extensions, and other settings of your MediaWiki
+- ![](./docs/pics/icon-fix.png) fix markup and typography issues with a single «make it good» button
 - ![](./docs/pics/icon-sync.png)
-публиковать-синхронизировать MediaWiki-файлы используя [MWS](https://gitverse.ru/belonesox/mvs)
-  - рекомендуем командлайн утилиту [MWS](https://gitverse.ru/belonesox/mvs), для вежливой синхронизации (*three-way merge*, не публикует конфликты) в духе  простых Version Control System (типа RCS, CVS).
+publish and synchronize MediaWiki files using [MWS](https://gitverse.ru/belonesox/mvs)
+  - we recommend the [MWS](https://gitverse.ru/belonesox/mvs) command-line utility for polite synchronization (*three-way merge*, does not publish conflicts) in the spirit of simple Version Control Systems (like RCS, CVS).
 
-# Инсталляция
-Поставить 
-- это расширение
-- расширение [wikitext](https://marketplace.visualstudio.com/items?itemName=RoweWilsonFrederiskHolme.wikitext)
-    - самая актуальная поддержка MediaWiki
-    - wikiparser необязателен
-- опционально рекомендуем утилиту [MWS](https://gitverse.ru/belonesox/mvs) для публикации 
-  - но можно использовать что-то свое
-  - или тупо копипастить отредактированный вики-контент в MediaWiki и обратно
+# Installation
+Install
+- this extension
+- the [wikitext](https://marketplace.visualstudio.com/items?itemName=RoweWilsonFrederiskHolme.wikitext) extension
+    - the most up-to-date MediaWiki support
+    - wikiparser is optional
+- optionally, we recommend the [MWS](https://gitverse.ru/belonesox/mvs) utility for publishing
+  - but you can use your own tools
+  - or simply copy-paste the edited wiki content to MediaWiki and back
 
+# Usage
+Open a file containing wikitext.
+Three buttons will appear.
 
-# Использование
-Откройте файл с wikitext.
-Появятся три кнопки.
-
-![](./docs/pics/icon-preview.png) Предпросмотр MediaWiki-разметки прямо в VS Code / code-server через удалённую MediaWiki 
-- используется метод API (`action=parse`), позволяющий работать с древними MediaWiki, еще не имеющими Parsoid.
-- Ищет локальную конфигурацию в `.mws/config.json`, поднимаясь от текущего файла вверх по каталогам, а там параметр `api_url`.
-  - такой файл создается системой MWS, но можно сделать и вручную, если не использовать ее.
+![](./docs/pics/icon-preview.png) Preview MediaWiki markup directly in VS Code / code-server via remote MediaWiki
+- uses the API method (`action=parse`), allowing it to work with ancient MediaWiki versions that do not yet have Parsoid.
+- Searches for a local configuration in `.mws/config.json`, traversing up directories from the current file, looking for the `api_url` parameter.
+  - such a file is created by the MWS system, but you can also create it manually if you don't use it.
     ```json
     {
-      "api_url": "https://0x1.tv"
+      "api_url": "[https://0x1.tv](https://0x1.tv)"
     }
     ```
-  > `api_url` может быть как полным путём к `api.php`, так и базовым сайтом (в этом случае расширение попробует подставить `/w/api.php`).
+  > `api_url` can be either the full path to `api.php` or the base website URL (in this case, the extension will try to append `/w/api.php`).
 
-- Если не нашёл — использует глобальную настройку `mws.apiUrl`.
-- Живое обновление предпросмотра с дебаунсом.
+- If not found, it uses the global `mws.apiUrl` setting.
+- Live preview updates with debouncing.
 
-![](./docs/pics/icon-fix.png) — чинит проблемы разметки и, опционально, русской типографики  одной кнопкой «сделать хорошо», интегрированы двадцать лет опыта и  сотни эвристик из проекта [MediaWiki4intranet](https://wiki.4intra.net).
+![](./docs/pics/icon-fix.png) — fixes markup issues and, optionally, Russian typography with a single «make it good» button, integrating twenty years of experience and hundreds of heuristics from the [MediaWiki4intranet](https://wiki.4intra.net) project.
 
+![](./docs/pics/icon-sync.png) Publishing and synchronizing a local `.mw` file, if it was checked out via MWS.
+  - credentials for authorized publishing
+    - will be prompted for on the first commit
+    - format
+      - `username password [domain]` (enter space-separated)
+    - can be reset using the `mws.setAuthString` command
+    - stored only in session memory
+      - allows different wiki users to publish via a single code-server.
+      - secure
+        - > experimented with various keyrings, it's all a profanation if working on a shared code-server.
+  - also, during the first commit, it will ask for an edit *summary* for the changes, and will use it subsequently
+    - marks all wiki edits in the working session in a unified way
+    - can be reset using the `mws.setSyncSummary` command
 
-![](./docs/pics/icon-sync.png) Публикация-синхронизация локального `.mw`-файла, если он был выгружен через MWS.
-  - креденшиалы для авторизованной публикации 
-    - спросит при первом коммите
-    - формат
-      - `пользователь пароль [домен]` (вводить через пробел)      
-    - можно перезадать командой `mws.setAuthString`
-    - хранит только в памяти сессии
-      - позволяет публиковать через единый code-server разным вики-пользователям.
-      - секьюрно
-        - > экспериментировал с разными keyrings, все профанация, если работать на общем code-server.
-  - также при первом коммите спросит комментарий-*summary* к изменениям, и будет его использовать в последующем 
-    - пометить все вики-правки в рабочей сессии единым образом
-    - можно перезадать командой `mws.setSyncSummary`
+A normal *paste* works smartly, converting (as best it can) rich/html markup into wikitext.
+- Headings, lists, bold, italics, etc.
+- Tables are converted to HTML tables
+  - for flexible support of coloring/formatting (it's easier to keep styles)
+  - drops elements/attributes not supported by MediaWiki
+    - class references, etc.
+  - formatted in such a way that
+    - the structure is visible
+    - but the cell content starts at the beginning of the lines
+      - making it easier to develop later as wiki content
 
-Обычный *paste* работает умно, конвертирует (как может) rich/html разметку в wikitext.
-- Разделы-списки-жирный-италик и т.п.
-- Таблицы конвертируются в HTML-таблицы
-  - для гибкой поддержки раскраски-форматирования (удобней держать стили)
-  - выкидываются элементы-атрибуты не поддерживаемые MediaWiki
-    - ссылки на классы и т.п.
-  - форматируется так, что 
-    - видна структура
-    - но контент в ячейках начинается с начала строк      
-      - удобней развивать потом, как вики-контент  
+## Development
+- Checkout
+- `npm install`
+- `Run Extension` in the debugger.
 
+- `./build-install-locally.sh` — build and install locally
 
-## Разработка
-- Чекаут
-- `npm install` 
-- `Run Extension` в отладчике.
-
-- `./build-install-locally.sh` — собрать и поставить локально
-
-Есть тесты (пока на эвристики «починить все»)
+There are tests (currently for the «fix everything» heuristics)
 - `npm test`
 
-## Конфиг
-- `mws.apiUrl`: строка, по умолчанию `https://ru.wikipedia.org/w/api.php`
-  - используется, если локальный конфиг `.mws/config.json` не найден
-- `mws.debounceMs`: дебаунс автообновлений в миллисекундах
-  - todo: перейти на микросекунды или секунды, смысла делать быстрее пары секунд нет.
-- `mws.background`: Цвет фона предпросмотра
-  - временный хак, из-за неполноты подтаскиваемых стилей
-    - может получится нечитаемый текст, если тащить стили по умолчанию из темных тем VSCode/code-server
-- `mws.hideEditLinks` Скрывать ссылки [править] в заголовках.
-  - todo: наверно надо захардкодить, никому они никогда не нужны
-- `mws.insecureTLS`: Разрешить небезопасные TLS-соединения, например
-  - для самоподписанных сертификатов в интранет-виках
-  - или вообще http-соединений.
-- `mws.fixTypography`: Исправлять и типографику при «Fix WikiText».
-- `mws.sync.command`: команда публикации, по умолчанию настроена чтобы работать с MWS          
-  - есть подстановки
+## Configuration
+- `mws.apiUrl`: string, default is `https://ru.wikipedia.org/w/api.php`
+  - used if the local config `.mws/config.json` is not found
+- `mws.debounceMs`: auto-update debounce in milliseconds
+  - todo: switch to microseconds or seconds, there's no point in doing it faster than a couple of seconds.
+- `mws.background`: Preview background color
+  - a temporary hack due to the incompleteness of fetched styles
+    - might result in unreadable text if pulling default styles from dark VSCode/code-server themes
+- `mws.hideEditLinks`: Hide [edit] links in headings.
+  - todo: probably needs to be hardcoded, no one ever needs them
+- `mws.insecureTLS`: Allow insecure TLS connections, for example
+  - for self-signed certificates in intranet wikis
+  - or for standard http connections.
+- `mws.fixTypography`: Fix typography as well during «Fix WikiText».
+- `mws.sync.command`: publish command, configured by default to work with MWS
+  - supports substitutions
     - `${file}`, `${workspaceFolder}`, `${summary}` …
-  - легко переделать на вашу систему публикации
+  - easily adaptable to your publishing system
 
-### Обсуждение и новости
-- Пока в [ТГ-группе «FlippedClassroom»](https://t.me/+lGrw4_WjS802ZmNi), топик «Knowledge Management». 
-- В `./changelog.md` — лог новых фич.
+### Discussion and News
+- Currently in Russian the ["FlippedClassroom" TG group](https://t.me/+lGrw4_WjS802ZmNi), «Knowledge Management» topic.
+- New features log is in `./changelog.md`.
 
-## Лицензия
+## License
 
 MIT
