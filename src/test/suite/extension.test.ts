@@ -26,7 +26,7 @@ suite('fixWikiText Test Suite', () => {
             const config = JSON.parse(configRaw);
             const { origin, baseDir } = computeOrigins(config.api_url || '');
 
-			const actualText = fixWikiTextLogic(sourceText, origin, baseDir, { fixTypography: false });
+			const actualText = fixWikiTextLogic(sourceText, origin, baseDir, { fixTypography: true });
 
 			assert.strictEqual(actualText.trim(), expectedText.trim());
 		});

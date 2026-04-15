@@ -27,9 +27,10 @@ export function wikify(text: string): string {
 
   hideTag("html");
   hideTag("m");
+  hideTag("ref");
   hide(/^ .*$/gim); //lines starting with space
   hide(
-    /(http|https|ftp|tftp|news|nntp|telnet|irc|gopher):\/\/[^ \n\r\u00A0]* ?/gi
+    /(http|https|ftp|tftp|news|nntp|telnet|irc|gopher):\/\/[^\s\[\]<>"]* ?/gi
   ); //links
 
   hideTag("nowiki");
@@ -112,7 +113,8 @@ export function wikify(text: string): string {
     "$1{{примечания}}"
   );
   // Hide any tag with content, to prevent wikifying code/dsl inside.
-  hide(/<([a-z][a-z0-9]*)(?: [^>]+)?>[\s\S]*?<\/\1>/gi);
+  // Exclude tags where we want to process wikitext within them (e.g. blockquote).
+  hide(/<(?!(?:blockquote)\b)([a-z][a-z0-9]*)(?: [^>]+)?>[\s\S]*?<\/\1>/gi);
   hide(/<[a-z][^>]*?>/gi);
 
   hide(/^({\||\|-).*/gm); //table/row def
@@ -231,9 +233,16 @@ export function wikify(text: string): string {
   //"" → «»
   // A more robust regex to handle quotes.
   // It looks for an opening quote preceded by a non-word character (or start of line).
-  r(/(^|\W)"([^"]+)"/g, "$1«$2»");
+  r(/"/g, "»");
+  r(/(^|\s|[\(\[{\]])»/g, "$1«");
   while (/«[^»]*«/.test(txt)) {
-    r(/«([^»]*)«([^»]*)»/g, "«$1„$2“");
+    const oldTxt = txt;
+    // Replace the first found complete nested structure.
+    r(/«([^«»]*)«([^«»]*)»([^»]*)»/, '«$1„$2“$3»');
+    if (txt === oldTxt) {
+      // No change, break to prevent infinite loop on malformed input
+      break;
+    }
   }
 
   while (hidden.length > 0) {

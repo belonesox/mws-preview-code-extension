@@ -437,7 +437,6 @@ function escapeHtml(s: string) {
 }
 
 // ---------------- Auth & Sync ----------------
-// ---------------- Auth & Sync ----------------
 async function setAuthString() {
   const input = await vscode.window.showInputBox({
     prompt: "Строка авторизации (через пробел): username password [domain]",
@@ -589,13 +588,29 @@ export function fixWikiTextLogic(
 
   let newContent = content;
 
+  // Hide ref tags to protect their content
+  const refs: string[] = [];
+  newContent = newContent.replace(/<ref(?: [^>]+)?>[\s\S]*?<\/ref>/gi, (match) => {
+      refs.push(match);
+      return `\uE001${refs.length - 1}\uE002`;
+  });
+
+  // Hide content of tags that should not be processed
+  const protectedTags = ['nowiki', 'pre', 'source', 'syntaxhighlight', 'tt', 'math'];
+  const protectedContent: string[] = [];
+  const tagRegex = new RegExp(`<(${protectedTags.join('|')})\\b[^>]*>[\\s\\S]*?<\\/\\1>`, 'gi');
+  newContent = newContent.replace(tagRegex, (match) => {
+    protectedContent.push(match);
+    return `\uE003${protectedContent.length - 1}\uE004`;
+  });
+
   // Rule: Decode Punycode URLs
   newContent = newContent.replace(
-    /(https?:\/\/)([^/?#\s]+)/g,
-    (match, protocol, hostname) => {
+    /(https?:\/\/)([^:/?#\s\]]+)(:\d+)?/g,
+    (match, protocol, hostname, port) => {
       try {
         const unicodeHostname = domainToUnicode(hostname);
-        return protocol + unicodeHostname;
+        return protocol + unicodeHostname + (port || "");
       } catch (e) {
         return match;
       }
@@ -767,6 +782,16 @@ export function fixWikiTextLogic(
     } catch (e) {
       return match;
     }
+  });
+
+  // Restore ref tags
+  newContent = newContent.replace(/\uE001(\d+)\uE002/g, (_match, index) => {
+    return refs[parseInt(index, 10)];
+  });
+
+  // Restore protected tags
+  newContent = newContent.replace(/\uE003(\d+)\uE004/g, (_match, index) => {
+    return protectedContent[parseInt(index, 10)];
   });
 
   let newText = metadataBlock + newContent;
