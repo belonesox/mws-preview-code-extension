@@ -3,7 +3,7 @@
   "displayName": "MWS Preview (MediaWiki via API)",
   "description": "Efficient MediaWiki preview using MediaWiki API, heuristics to paste/fix wikitext, publish using MWS",
   "icon": "media/icon.png",
-  "version": "0.5.16",
+  "version": "0.5.17",
   "publisher": "belonesox",
   "repository": {
     "type": "git",
