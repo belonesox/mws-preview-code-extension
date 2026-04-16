@@ -423,11 +423,25 @@ function wrapHTML(
 <meta http-equiv="Content-Security-Policy"
   content="default-src 'none'; img-src * data:; style-src 'unsafe-inline' *; font-src * data:;">    
   <style>
-    html, body { padding: 0; margin: 0; background: ${bg}; }
-    body { padding: 12px; line-height: 1.6; font-family: -apple-system, Segoe UI, Roboto, sans-serif; color: #111; }
+    /* 1. Сбрасываем фон и отступы, отдавая контроль MediaWiki */
+    html, body { 
+        padding: 0; 
+        margin: 0; 
+        background: ${bg}; 
+        /* Убираем захардкоженный font-family, чтобы работал скин */
+    }
+    
+    /* 2. Нейтрализуем дефолтные стили VSCode, которые "просвечивают" */
+    blockquote {
+        background: transparent !important;
+    }
+    
+    a {
+        text-decoration: none;
+    }
+
+    /* 3. Оставляем полезные фиксы для превью */
     table { border-collapse: collapse; }
-    table, th, td { border: 1px solid rgba(127,127,127,.3); }
-    th, td { padding: 4px 6px; }
     img { max-width: 100%; height: auto; }
     pre { white-space: pre-wrap; }
     .thumb, .thumbinner, .thumbimage { max-width: 100%; }
@@ -436,7 +450,7 @@ function wrapHTML(
     ${editHideCss}
     ${localStyle || ""}
   </style>
-</head>
+  </head>
 <body>${inner}</body>
 </html>`;
 }
