@@ -54,33 +54,44 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // Гарантированно получаем kind (в современных VS Code есть .Empty)
-  const pasteKind = vscode.DocumentDropOrPasteEditKind.Empty.append('wikitext', 'html');
+  const pasteKind = vscode.DocumentDropOrPasteEditKind.Empty.append(
+    "wikitext",
+    "html"
+  );
 
   const pasteProvider: vscode.DocumentPasteEditProvider = {
     async provideDocumentPasteEdits(doc, ranges, dataTransfer) {
-      const htmlItem = dataTransfer.get('text/html');
+      const htmlItem = dataTransfer.get("text/html");
       if (!htmlItem) return;
 
-      const html = await htmlItem.asString();  
+      const html = await htmlItem.asString();
       if (!html) return;
 
       logDebug("Clipboard has HTML:" + html);
 
-      const wikitext = html2mw(html);          
+      const wikitext = html2mw(html);
 
-      const paste = new vscode.DocumentPasteEdit(wikitext, 'Paste HTML as Wikitext', pasteKind);
+      const paste = new vscode.DocumentPasteEdit(
+        wikitext,
+        "Paste HTML as Wikitext",
+        pasteKind
+      );
       return [paste];
-    }
+    },
   };
 
   // Метаданные: всегда массив, без undefined
   const meta: vscode.DocumentPasteProviderMetadata = {
-    pasteMimeTypes: ['text/html'],
+    pasteMimeTypes: ["text/html"],
     providedPasteEditKinds: [pasteKind],
   };
 
   context.subscriptions.push(
-    vscode.languages.registerDocumentPasteEditProvider({ language: 'wikitext' }, pasteProvider, meta)
+    vscode.languages.registerDocumentPasteEditProvider(
+      { language: "wikitext" },
+      pasteProvider,
+      meta
+    )
   );
 }
 
@@ -131,7 +142,8 @@ async function openPreview(context: vscode.ExtensionContext) {
     try {
       const doc = editor.document;
       const text = doc.getText();
-      const { apiUrl, ua, origin, baseDir, localStyle, externalCss, skin } = await resolveEnv(doc.uri);
+      const { apiUrl, ua, origin, baseDir, localStyle, externalCss, skin } =
+        await resolveEnv(doc.uri);
       if (!apiUrl) {
         panel!.webview.html = wrapHTML(
           `<p style="color:#c00">Не задан api_url (ни в .mws/config.json, ни в глобальной настройке mws.apiUrl).</p>`,
@@ -150,10 +162,10 @@ async function openPreview(context: vscode.ExtensionContext) {
       const htmlFixed = rewriteResourceUrls(htmlRaw, origin, baseDir);
       // Базовые модули, которые нужны для любого MW-контента
       const baseModules = [
-        "site.styles",                 // Подтянет кастомный MediaWiki:Common.css твоей вики
-        "mediawiki.skinning.content",  // Базовые стили контента (как раз dt/dd, отступы, картинки)
+        "site.styles", // Подтянет кастомный MediaWiki:Common.css твоей вики
+        "mediawiki.skinning.content", // Базовые стили контента (как раз dt/dd, отступы, картинки)
         "mediawiki.skinning.interface", // Базовые интерфейсные штуки
-        `skins.${skin}.styles`
+        `skins.${skin}.styles`,
       ];
 
       // Сливаем базовые модули с теми, что отдал action=parse (Set уберет дубликаты)
@@ -175,6 +187,7 @@ async function openPreview(context: vscode.ExtensionContext) {
         externalCss,
         mwStyles,
         hideEdit,
+        skin, // <-- передаем скин
       });
     } catch (e: any) {
       panel!.webview.html = wrapHTML(
@@ -232,14 +245,16 @@ async function resolveEnv(uri: vscode.Uri): Promise<{
   if (localConfig?.api_url) {
     apiUrl = normalizeApi(localConfig.api_url);
     ua = localConfig.user_agent || ua;
-    externalCss = Array.isArray(localConfig.skin_css) ? localConfig.skin_css : [];
+    externalCss = Array.isArray(localConfig.skin_css)
+      ? localConfig.skin_css
+      : [];
     skin = localConfig.skin || cfg.get<string>("skin") || "vector";
   } else {
     apiUrl = cfg.get<string>("apiUrl") || null;
     apiUrl = apiUrl ? normalizeApi(apiUrl) : null;
     skin = cfg.get<string>("skin") || "vector";
   }
-  
+
   const { origin, baseDir } = computeOrigins(apiUrl || "");
   const localStyle = await findLocalStyle(uri);
   return { apiUrl, ua, origin, baseDir, localStyle, externalCss, skin };
@@ -249,7 +264,10 @@ function normalizeApi(url: string): string {
   return url;
 }
 
-export function computeOrigins(endpoint: string): { origin: string; baseDir: string } {
+export function computeOrigins(endpoint: string): {
+  origin: string;
+  baseDir: string;
+} {
   try {
     const trimmed = endpoint.replace(/\/+$/, "");
     const u = new URL(
@@ -391,6 +409,7 @@ function wrapHTML(
     externalCss?: string[];
     mwStyles?: string[];
     hideEdit?: boolean;
+    skin?: string; // <-- добавили
   } = {}
 ) {
   const {
@@ -401,6 +420,7 @@ function wrapHTML(
     externalCss = [],
     mwStyles = [],
     hideEdit = true,
+    skin = "vector", // <-- дефолт
   } = opts;
   const baseTag = origin && baseDir ? `<base href="${origin}${baseDir}">` : "";
   const externalLinks = (externalCss || [])
@@ -423,23 +443,20 @@ function wrapHTML(
 <meta http-equiv="Content-Security-Policy"
   content="default-src 'none'; img-src * data:; style-src 'unsafe-inline' *; font-src * data:;">    
   <style>
-    /* 1. Сбрасываем фон и отступы, отдавая контроль MediaWiki */
-    html, body { 
-        padding: 0; 
-        margin: 0; 
+    /* 1. Имитируем отсутствующий контейнер страницы #content из скина Vector */
+    html, body { margin: 0; height: 100%; }
+    body { 
+        padding: 12px 12px; 
         background: ${bg}; 
-        /* Убираем захардкоженный font-family, чтобы работал скин */
+        
+        /* 2. CSS-ДЗЮДО: Заставляем встроенные стили VSCode использовать палитру MediaWiki! */
+        --vscode-textBlockQuote-background: transparent;
+        --vscode-textBlockQuote-border: var(--border-color-muted, #dadde3);
+        
+        /* Заодно чиним цвет обычных ссылок на случай, если VSCode сделает их слишком темными */
+        --vscode-textLink-foreground: var(--color-progressive, #36c);
     }
     
-    /* 2. Нейтрализуем дефолтные стили VSCode, которые "просвечивают" */
-    blockquote {
-        background: transparent !important;
-    }
-    
-    a {
-        text-decoration: none;
-    }
-
     /* 3. Оставляем полезные фиксы для превью */
     table { border-collapse: collapse; }
     img { max-width: 100%; height: auto; }
@@ -451,10 +468,13 @@ function wrapHTML(
     ${localStyle || ""}
   </style>
   </head>
-<body>${inner}</body>
+<body class="mediawiki skin-${skin}">
+  <div class="mw-body mw-body-content">
+    ${inner}
+  </div>
+</body>
 </html>`;
 }
-
 
 function escapeHtml(s: string) {
   return s.replace(
@@ -473,9 +493,9 @@ async function setAuthString() {
     ignoreFocusOut: true, // Театр безопасности с password: true убран
     placeHolder: "bot@suffix my_secret_password optional_domain",
   });
-  
+
   if (!input) return;
-  
+
   const parts = input.trim().split(/\s+/);
   if (parts.length < 2 || parts.length > 3) {
     vscode.window.showErrorMessage(
@@ -483,12 +503,14 @@ async function setAuthString() {
     );
     return;
   }
-  
+
   const [user, password, domain = ""] = parts;
-  
+
   sessionAuth = { username: user, domain, password };
   vscode.window.showInformationMessage(
-    `Авторизация сохранена в сессии: ${user}${domain ? " (домен: " + domain + ")" : ""}`
+    `Авторизация сохранена в сессии: ${user}${
+      domain ? " (домен: " + domain + ")" : ""
+    }`
   );
 }
 
@@ -543,60 +565,60 @@ function interpolateCommand(
  * @returns Декодированная строка (например, "№17" или "Тест с пробелами")
  */
 // Плейсхолдер из области Private Use Area (гарантированно не используется в тексте)
-const SEMVER_PLACEHOLDER = '\u{E000}';
+const SEMVER_PLACEHOLDER = "\u{E000}";
 
 function decodeMwFragment(encodedFragment: string): string {
-    if (!encodedFragment) {
-        return '';
-    }
+  if (!encodedFragment) {
+    return "";
+  }
 
-    // 1. Заменяем все подчеркивания (_) на пробелы.
-    let tempFragment = encodedFragment.replace(/_/g, ' ');
+  // 1. Заменяем все подчеркивания (_) на пробелы.
+  let tempFragment = encodedFragment.replace(/_/g, " ");
 
-    // 2. ЭВРИСТИКА: Прячем числа, похожие на semver (X.Y или X.Y.Z)
-    // Цель: заменить точку `.` в этих числах на плейсхолдер, чтобы избежать
-    // ее преобразования в `%2E` во время Шага 3.
+  // 2. ЭВРИСТИКА: Прячем числа, похожие на semver (X.Y или X.Y.Z)
+  // Цель: заменить точку `.` в этих числах на плейсхолдер, чтобы избежать
+  // ее преобразования в `%2E` во время Шага 3.
 
-    // Регулярное выражение для поиска `.` между двумя цифрами: `(\d)\.(\d)`
-    // или более сложное: цифра, точка, цифра, (опционально) точка, цифра.
-    // Мы упростим до поиска точки, окруженной цифрами.
-    // Важно: мы ищем точку, которая НЕ закодирована как .XX (т.е. обычную точку)
+  // Регулярное выражение для поиска `.` между двумя цифрами: `(\d)\.(\d)`
+  // или более сложное: цифра, точка, цифра, (опционально) точка, цифра.
+  // Мы упростим до поиска точки, окруженной цифрами.
+  // Важно: мы ищем точку, которая НЕ закодирована как .XX (т.е. обычную точку)
 
-    let protectedSemver1 = tempFragment.replace(
-        /([^\d])(\d)\.(\d).(\d\d?)/g, 
-        (match, p1, p2, p3, p4) => p1 + p2 + SEMVER_PLACEHOLDER + p3 + SEMVER_PLACEHOLDER + p4
+  let protectedSemver1 = tempFragment.replace(
+    /([^\d])(\d)\.(\d).(\d\d?)/g,
+    (match, p1, p2, p3, p4) =>
+      p1 + p2 + SEMVER_PLACEHOLDER + p3 + SEMVER_PLACEHOLDER + p4
+  );
+
+  let protectedSemver2 = protectedSemver1.replace(
+    /([^[0-F]])(\d)\.(\d\d?)([^[0-F]])?/g,
+    (match, p1, p2, p3, p4) => p1 + p2 + SEMVER_PLACEHOLDER + p3 + p4
+  );
+
+  // 3. Заменяем все последовательности ".XX" на "%XX".
+  // Теперь это безопасно: `.XX` будут только кодировками символов (кириллица, скобки),
+  // а точки в числах уже заменены плейсхолдером.
+  let percentEncodedFragment = protectedSemver2.replace(
+    /\.([0-9A-Fa-f]{2})/g,
+    (match, p1) => `%${p1}`
+  );
+
+  // 4. Используем decodeURIComponent для декодирования UTF-8 байтов.
+  try {
+    let result0 = decodeURIComponent(percentEncodedFragment);
+
+    // 5. Восстанавливаем точку в semver-подобных числах
+    let result = result0.replace(new RegExp(SEMVER_PLACEHOLDER, "g"), ".");
+
+    return result;
+  } catch (e) {
+    console.error(
+      `Ошибка декодирования MediaWiki якоря: ${encodedFragment}`,
+      e
     );
-
-    let protectedSemver2 = protectedSemver1.replace(
-        /([^[0-F]])(\d)\.(\d\d?)([^[0-F]])?/g, 
-        (match, p1, p2, p3, p4) => p1 + p2 + SEMVER_PLACEHOLDER + p3 + p4
-    );
-
-    // 3. Заменяем все последовательности ".XX" на "%XX".
-    // Теперь это безопасно: `.XX` будут только кодировками символов (кириллица, скобки),
-    // а точки в числах уже заменены плейсхолдером.
-    let percentEncodedFragment = protectedSemver2.replace(
-        /\.([0-9A-Fa-f]{2})/g, 
-        (match, p1) => `%${p1}`
-    );
-
-    // 4. Используем decodeURIComponent для декодирования UTF-8 байтов.
-    try {
-        let result0 = decodeURIComponent(percentEncodedFragment);
-        
-        // 5. Восстанавливаем точку в semver-подобных числах
-        let result = result0.replace(
-            new RegExp(SEMVER_PLACEHOLDER, 'g'), 
-            '.'
-        );
-        
-        return result;
-    } catch (e) {
-        console.error(`Ошибка декодирования MediaWiki якоря: ${encodedFragment}`, e);
-        return encodedFragment;
-    }
+    return encodedFragment;
+  }
 }
-
 
 export function fixWikiTextLogic(
   text: string,
@@ -620,15 +642,28 @@ export function fixWikiTextLogic(
 
   // Hide ref tags to protect their content
   const refs: string[] = [];
-  newContent = newContent.replace(/<ref(?: [^>]+)?>[\s\S]*?<\/ref>/gi, (match) => {
+  newContent = newContent.replace(
+    /<ref(?: [^>]+)?>[\s\S]*?<\/ref>/gi,
+    (match) => {
       refs.push(match);
       return `\uE001${refs.length - 1}\uE002`;
-  });
+    }
+  );
 
   // Hide content of tags that should not be processed
-  const protectedTags = ['nowiki', 'pre', 'source', 'syntaxhighlight', 'tt', 'math'];
+  const protectedTags = [
+    "nowiki",
+    "pre",
+    "source",
+    "syntaxhighlight",
+    "tt",
+    "math",
+  ];
   const protectedContent: string[] = [];
-  const tagRegex = new RegExp(`<(${protectedTags.join('|')})\\b[^>]*>[\\s\\S]*?<\\/\\1>`, 'gi');
+  const tagRegex = new RegExp(
+    `<(${protectedTags.join("|")})\\b[^>]*>[\\s\\S]*?<\\/\\1>`,
+    "gi"
+  );
   newContent = newContent.replace(tagRegex, (match) => {
     protectedContent.push(match);
     return `\uE003${protectedContent.length - 1}\uE004`;
@@ -714,7 +749,7 @@ export function fixWikiTextLogic(
       }
 
       if (pageTitlePath.includes("img_auth.php")) {
-        const parts = pageTitlePath.split('/');
+        const parts = pageTitlePath.split("/");
         const filename = parts.pop();
         if (filename) {
           pageTitlePath = `File:${filename}`;
@@ -727,15 +762,20 @@ export function fixWikiTextLogic(
       let pageTitle = decodeURIComponent(path).replace(/_/g, " ");
 
       if (fragment) {
-        if (pageTitle.match(/^(File|Файл):/i) && pageTitle.toLowerCase().endsWith('.pdf') && fragment.match(/^page=\d+$/)) {
+        if (
+          pageTitle.match(/^(File|Файл):/i) &&
+          pageTitle.toLowerCase().endsWith(".pdf") &&
+          fragment.match(/^page=\d+$/)
+        ) {
           pageTitle += "|" + fragment;
         } else {
           pageTitle += "#" + decodeMwFragment(fragment);
         }
       }
 
-      const needsColon =
-        /^(Category|Категория|Template|Шаблон):/i.test(pageTitle);
+      const needsColon = /^(Category|Категория|Template|Шаблон):/i.test(
+        pageTitle
+      );
       const colon = needsColon ? ":" : "";
 
       if (linkText) {
@@ -784,7 +824,7 @@ export function fixWikiTextLogic(
       }
 
       if (pageTitlePath.includes("img_auth.php")) {
-        const parts = pageTitlePath.split('/');
+        const parts = pageTitlePath.split("/");
         const filename = parts.pop();
         if (filename) {
           pageTitlePath = `File:${filename}`;
@@ -797,15 +837,20 @@ export function fixWikiTextLogic(
       let pageTitle = decodeURIComponent(path).replace(/_/g, " ");
 
       if (fragment) {
-        if (pageTitle.match(/^(File|Файл):/i) && pageTitle.toLowerCase().endsWith('.pdf') && fragment.match(/^page=\d+$/)) {
+        if (
+          pageTitle.match(/^(File|Файл):/i) &&
+          pageTitle.toLowerCase().endsWith(".pdf") &&
+          fragment.match(/^page=\d+$/)
+        ) {
           pageTitle += "|" + fragment;
         } else {
           pageTitle += "#" + decodeMwFragment(fragment);
         }
       }
 
-      const needsColon =
-        /^(Category|Категория|Template|Шаблон):/i.test(pageTitle);
+      const needsColon = /^(Category|Категория|Template|Шаблон):/i.test(
+        pageTitle
+      );
       const colon = needsColon ? ":" : "";
 
       return `[[${colon}${pageTitle}]]`;
